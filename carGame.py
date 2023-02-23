@@ -83,6 +83,8 @@ def draw(win, images, humanCar):
 
 
 lastMove = 0 # 0: fwd, 1: bkwd  ## Used to remember which the last movement was, accordingly apply friction.
+
+
 def movePlayer(player):
     global lastMove
 
