@@ -53,7 +53,11 @@ class AbstractCar:  # Abstract parent class of a car
         self.move()
 
     def move_bkwd(self):
-        self.vel = max(self.vel - self.acc, -self.max_vel/(1.5)) # acceerate the car
+        if self.vel > 0:
+            self.vel = max(self.vel - 5*self.acc, 0) # acceerate the car
+        else:
+            self.vel = max(self.vel - self.acc, -self.max_vel / (1.5))  # acceerate the car
+            
         self.move()
 
     def move(self):
@@ -64,11 +68,11 @@ class AbstractCar:  # Abstract parent class of a car
         self.y -= yvel
 
     def fwdFriction(self):
-        self.vel = max(self.vel - (self.acc/3), 0) # Forward friction
+        self.vel = max(self.vel - (self.acc/4), 0) # Forward friction
         self.move()
 
     def bkwdFriction(self):
-        self.vel = min(self.vel + (self.acc/3), 0) # Backward friction
+        self.vel = min(self.vel + (self.acc/4), 0) # Backward friction
         self.move()
 
     def collision(self, mask, x=0, y=0):
