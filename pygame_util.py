@@ -12,3 +12,10 @@ def rotate_image_ByCenter(win, img, top_left, angle):
     # rotation, translate the new image back to the new center
     win.blit(rotImg, newRect) # rotated image with new coordinates.
 
+
+def rotate_image_ByCenter_noApply(img, top_left, angle):
+    rotImg = pygame.transform.rotate(img, angle) # pygame default rotate at topleft ig...
+    newRect = rotImg.get_rect(center=img.get_rect(topleft=top_left).center) # To avoid morphing/destortion after
+    # rotation, translate the new image back to the new center
+    return rotImg, newRect
+
