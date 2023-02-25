@@ -8,7 +8,7 @@ from pygame_util import scale_image, rotate_image_ByCenter, rotate_image_ByCente
 from humanCar import HumanPlayer
 
 
-def draw(win, images, car, clock):
+def draw(win, images, car, clock, RADAR):
     for img, posi in images:
         win.blit(img, posi)
 
@@ -28,7 +28,15 @@ def draw(win, images, car, clock):
 
 
 
-def startGame(car, TRACK_OL_MASK):
+def startGame(car, TRACK_OL_MASK, FLAGS=None):
+
+    if FLAGS is None:
+        FLAGS = {
+            "RADAR": True
+        }
+    RADAR = FLAGS["RADAR"]
+
+
     lastMove = 0  # 0: fwd, 1: bkwd  ## Used to remember which the last movement was, accordingly apply friction.
 
     FPS = 60
@@ -39,7 +47,7 @@ def startGame(car, TRACK_OL_MASK):
     while run:  # handles all events (collisions, user movements, window status, etc)
         clock.tick(FPS)  # V-Sync
 
-        lidarReadings = draw(WIN, images, human1, clock)  # Drawing ## Also handles lidar
+        lidarReadings = draw(WIN, images, human1, clock, RADAR)  # Drawing ## Also handles lidar
 
         for event in pygame.event.get():  # Any event happened will be handelled here
             if event.type == pygame.QUIT:  # X is clicked?
@@ -65,7 +73,9 @@ def startGame(car, TRACK_OL_MASK):
 
 if __name__ == "__main__":
     # FLAGS
-    RADAR = True
+    FLAGS = {
+        "RADAR" : True,
+    }
 
     # MAIN()
     # Loading image assets
@@ -96,4 +106,4 @@ if __name__ == "__main__":
     # Creating a human Object
     human1 = HumanPlayer(CAR_R, 4, 2)
 
-    startGame(human1, TRACK_OL_MASK)
+    startGame(human1, TRACK_OL_MASK, FLAGS)
