@@ -1,10 +1,13 @@
 import pygame
 import time
 import math
+import sys
 
 # util files
-from pygame_util import scale_image, rotate_image_ByCenter, rotate_image_ByCenter_noApply
+from pygame_util import scale_image, rotate_image_ByCenter, rotate_image_ByCenter_noApply, drawRadarV2, drawTable
 
+# FLAGS
+RADAR = True
 
 # MAIN()
 # Loading image assets
@@ -21,6 +24,7 @@ FINISH = scale_image(FINISH, 0.40)
 FINISH_ROTATE = 90
 FINISH_COORDS = (460, 622)
 FINISH, FINISH_COORDS = rotate_image_ByCenter_noApply(FINISH, FINISH_COORDS, FINISH_ROTATE)
+FINISH_MASK = pygame.mask.from_surface(FINISH)
 
 CAR_R = pygame.image.load("assets/car_red.png")
 CAR_R = scale_image(CAR_R, 0.2)
@@ -29,7 +33,7 @@ WIDTH, HEIGHT = TRACK.get_width(), TRACK.get_height()
 WIN = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.display.set_caption("F1 Simulator!🔥🔥")
 
-images = [(BG, (0,0)), (TRACK, (0, 0)), (FINISH, FINISH_COORDS),] # Order of loading assets
+images = [(BG, (0,0)), (TRACK, (0, 0)), (FINISH, FINISH_COORDS), (TRACK_OL, (0, 0)), ] # Order of loading assets
 
 
 class AbstractCar:  # Abstract parent class of a car
@@ -102,7 +106,15 @@ def draw(win, images, humanCar):
     for img, posi in images:
         win.blit(img, posi)
 
+
+
+    dist = drawRadarV2(WIN, humanCar, TRACK_OL_MASK, RADAR)
+    drawTable(WIN, dist)
+
+
+
     humanCar.draw(win) # Draw the car
+
     pygame.display.set_caption("F1 Simulator!🔥🔥\t FPS:" + str(round(clock.get_fps())))
     pygame.display.update()  # Update display after new drawing
 
@@ -142,7 +154,7 @@ human1 = HumanPlayer(4, 2)
 FPS = 60
 clock = pygame.time.Clock() # To sync FPS ## no jittery
 
-
+pygame.init()
 run = True
 while run: # handles all events (collisions, user movements, window status, etc)
     clock.tick(FPS)  # V-Sync
@@ -158,8 +170,11 @@ while run: # handles all events (collisions, user movements, window status, etc)
 
     movePlayer(human1)
 
+    # Track Boundary Detection
     if human1.collision(TRACK_OL_MASK, 0, 0): # 0,0 because mask/ track is the bigg img
         human1.reset()
+
+    # Lidar
 
 
 pygame.quit()
