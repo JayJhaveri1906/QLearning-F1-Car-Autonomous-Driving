@@ -1,4 +1,5 @@
 from commonCar import AbstractCar
+import pygame
 
 
 class RoboCar(AbstractCar): # inherits everything from super class.
@@ -11,6 +12,7 @@ class RoboCar(AbstractCar): # inherits everything from super class.
 
         super().__init__(max_vel, rot_vel)
 
+
     def performAction(self, lastMove, action):
 
         JFR = {
@@ -21,7 +23,7 @@ class RoboCar(AbstractCar): # inherits everything from super class.
             4: 'w+a',
             5: 'w+d',
             # 6: 'w+s',
-            7: 'do nothing'
+            6: 'do nothing'
         } # Just For Reference
 
         moved = False

@@ -36,7 +36,7 @@ def startGame(car, images, TRACK_OL_MASK, REWARDS, REWARDS_mask, FLAGS=None):
         }
 
     lastMove = 0  # 0: fwd, 1: bkwd  ## Used to remember which the last movement was, accordingly apply friction.
-    rewardNo = 0
+    gateNo = 0
 
     FPS = 60
     clock = pygame.time.Clock()  # To sync FPS ## no jittery
@@ -46,8 +46,8 @@ def startGame(car, images, TRACK_OL_MASK, REWARDS, REWARDS_mask, FLAGS=None):
     while run:  # handles all events (collisions, user movements, window status, etc)
         clock.tick(FPS)  # V-Sync
 
-        lidarReadings = draw(WIN, images, REWARDS[rewardNo], car, clock, FLAGS)  # Drawing ## Also handles lidar
-        # surface = REWARDS_mask[rewardNo].to_surface()
+        lidarReadings = draw(WIN, images, REWARDS[gateNo], car, clock, FLAGS)  # Drawing ## Also handles lidar
+        # surface = REWARDS_mask[gateNo].to_surface()
         # WIN.blit(surface, (0,0))
 
         for event in pygame.event.get():  # Any event happened will be handelled here
@@ -66,14 +66,14 @@ def startGame(car, images, TRACK_OL_MASK, REWARDS, REWARDS_mask, FLAGS=None):
         # Track Boundary Detection
         if car.collision(TRACK_OL_MASK, 0, 0):  # 0,0 because mask/ track is the bigg img
             car.reset()
-            rewardNo = 0
+            gateNo = 0
 
 
         # Checking Reward Gate Collision
-        if car.collision(REWARDS_mask[rewardNo], 0, 0):
-            print("Reward!")
-            rewardNo += 1
-            rewardNo %= len(REWARDS_mask)
+        if car.collision(REWARDS_mask[gateNo], 0, 0):
+            # print("Reward!")
+            gateNo += 1
+            gateNo %= len(REWARDS_mask)
 
 
         # Lidar

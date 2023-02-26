@@ -63,6 +63,7 @@ def drawRadarV2(win, car, trackMask, FLAGS):
     # Center coordinates of the car current
     x, y = car.img.get_rect(topleft=(car.x, car.y)).center
     # win_line = pygame.Surface((win.get_width(), win.get_height()), pygame.SRCALPHA)
+    MAX_DISTANCE = 600
 
     dick = {
         "FRONT RAY": 0,
@@ -73,29 +74,29 @@ def drawRadarV2(win, car, trackMask, FLAGS):
         "FRONT RAY 5OCT": 3 * math.pi / 8,
         "FRONT RAY -5OCT": -3 * math.pi / 8,
 
-        "BACK RAY": math.pi,
-        "BACK RAY Quad": math.pi - math.pi / 4,
-        "BACK RAY -Quad": math.pi + math.pi / 4,
+        # "BACK RAY": math.pi,
+        # "BACK RAY Quad": math.pi - math.pi / 4,
+        # "BACK RAY -Quad": math.pi + math.pi / 4,
 
-        "LEFT": -math.pi / 2,
-        "RIGHT": math.pi / 2
+        # "LEFT": -math.pi / 2,
+        # "RIGHT": math.pi / 2
     }
 
     dist = {
         0: -1,
-        math.pi / 16: -1,
-        -math.pi / 16: -1,
-        math.pi / 8: -1,
-        -math.pi / 8: -1,
-        3 * math.pi / 8: -1,
-        -3 * math.pi / 8: -1,
+        math.pi / 16: MAX_DISTANCE,
+        -math.pi / 16: MAX_DISTANCE,
+        math.pi / 8: MAX_DISTANCE,
+        -math.pi / 8: MAX_DISTANCE,
+        3 * math.pi / 8: MAX_DISTANCE,
+        -3 * math.pi / 8: MAX_DISTANCE,
 
-        math.pi: -1,
-        math.pi - math.pi / 4: -1,
-        math.pi + math.pi / 4: -1,
-
-        -math.pi / 2: -math.pi / 2,
-        math.pi / 2: math.pi / 2
+        # math.pi: MAX_DISTANCE,
+        # math.pi - math.pi / 4: MAX_DISTANCE,
+        # math.pi + math.pi / 4: MAX_DISTANCE,
+        #
+        # -math.pi / 2: MAX_DISTANCE,
+        # math.pi / 2: MAX_DISTANCE,
     }
 
     # Displaying multiple lines (radar)
@@ -106,7 +107,8 @@ def drawRadarV2(win, car, trackMask, FLAGS):
         # if RADAR:
         #     pygame.draw.line(win, (0, 0, 0), (x, y), (endX, endY), 1)
 
-        for i in range(win.get_width()):
+        # for i in range(win.get_width()):
+        for i in range(MAX_DISTANCE): # max distance you think it could be at
             # Calculate the coordinates of the current pixel along the ray
             px = x - i * math.sin(angle_radians + offset)
             py = y - i * math.cos(angle_radians + offset)
