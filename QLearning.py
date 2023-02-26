@@ -2,41 +2,46 @@ import pygame
 import time
 import math
 import sys
-import glob
+from collections import defaultdict
+import pickle
 
 # util files
 from pygame_util import scale_image, rotate_image_ByCenter, rotate_image_ByCenter_noApply, drawRadarV2, drawTable
-from humanCar import HumanPlayer
+from RobotCar import RoboCar
 
 
-def draw(win, images, rewardGate, car, clock, FLAGS):
-    for img, posi in images[:-1]:
+def draw(win, images, car, clock, RADAR):
+    for img, posi in images:
         win.blit(img, posi)
 
-    if FLAGS["REWARD"]:
-        win.blit(rewardGate, (0, 0))
-    win.blit(images[-1][0], images[-1][1])
 
-    dist = drawRadarV2(WIN, car, TRACK_OL_MASK, FLAGS)
-    if FLAGS["RADAR"]:
+
+    dist = drawRadarV2(WIN, car, TRACK_OL_MASK, RADAR)
+    if RADAR:
         drawTable(WIN, dist)
 
-    car.draw(win)  # Draw the car
+
+
+    car.draw(win) # Draw the car
 
     pygame.display.set_caption("F1 Simulator!🔥🔥\t FPS:" + str(round(clock.get_fps())))
     pygame.display.update()  # Update display after new drawing
     return dist
 
 
-def startGame(car, images, TRACK_OL_MASK, REWARDS, REWARDS_mask, FLAGS=None):
+
+def startGame(car, TRACK_OL_MASK, FLAGS=None, q_table = None):
+
+    epoch = 0 # udates after every death
+
     if FLAGS is None:
         FLAGS = {
-            "RADAR": True,
-            "REWARD": True,
+            "RADAR": True
         }
+    RADAR = FLAGS["RADAR"]
+
 
     lastMove = 0  # 0: fwd, 1: bkwd  ## Used to remember which the last movement was, accordingly apply friction.
-    rewardNo = 0
 
     FPS = 60
     clock = pygame.time.Clock()  # To sync FPS ## no jittery
@@ -46,9 +51,7 @@ def startGame(car, images, TRACK_OL_MASK, REWARDS, REWARDS_mask, FLAGS=None):
     while run:  # handles all events (collisions, user movements, window status, etc)
         clock.tick(FPS)  # V-Sync
 
-        lidarReadings = draw(WIN, images, REWARDS[rewardNo], car, clock, FLAGS)  # Drawing ## Also handles lidar
-        # surface = REWARDS_mask[rewardNo].to_surface()
-        # WIN.blit(surface, (0,0))
+        lidarReadings = draw(WIN, images, car, clock, RADAR)  # Drawing ## Also handles lidar
 
         for event in pygame.event.get():  # Any event happened will be handelled here
             if event.type == pygame.QUIT:  # X is clicked?
@@ -66,26 +69,19 @@ def startGame(car, images, TRACK_OL_MASK, REWARDS, REWARDS_mask, FLAGS=None):
         # Track Boundary Detection
         if car.collision(TRACK_OL_MASK, 0, 0):  # 0,0 because mask/ track is the bigg img
             car.reset()
-            rewardNo = 0
-
-
-        # Checking Reward Gate Collision
-        if car.collision(REWARDS_mask[rewardNo], 0, 0):
-            print("Reward!")
-            rewardNo += 1
-            rewardNo %= len(REWARDS_mask)
-
 
         # Lidar
 
     pygame.quit()
 
+NoOfActions = 7
+def initQtableRow():
+    return [np.random.uniform(-5, 0) for i in range(NoOfActions)]
 
 if __name__ == "__main__":
     # FLAGS
     FLAGS = {
-        "RADAR": True,
-        "REWARD": True,
+        "RADAR" : True,
     }
 
     # MAIN()
@@ -109,26 +105,27 @@ if __name__ == "__main__":
     WIN = pygame.display.set_mode((WIDTH, HEIGHT))
     pygame.display.set_caption("F1 Simulator!🔥🔥")
 
+    images = [(BG, (0, 0)), (TRACK, (0, 0)), (FINISH, FINISH_COORDS), (TRACK_OL, (0, 0)), ]  # Order of loading assets
+
     CAR_R = pygame.image.load("assets/car_red.png")
     CAR_R = scale_image(CAR_R, 0.2)
 
-
-    # Reward Gates loading into an array
-    map = "Zandvoort"
-    folder_path = "assets/rewardGates/" + str(map)
-    png_files = glob.glob(folder_path + "/*.png")
-    num_files = len(png_files)
-    REWARDS = []
-    REWARDS_mask = []
-    for i in range(num_files):
-        reward = pygame.image.load(folder_path + "/RG"+str(i)+".png")
-        REWARDS.append(reward)
-        reward_mask = pygame.mask.from_surface(reward)
-        REWARDS_mask.append(reward_mask)
-
-    images = [(BG, (0, 0)), (TRACK, (0, 0)), (FINISH, FINISH_COORDS), (TRACK_OL, (0, 0)), ]  # Order of loading assets
-
     # Creating a human Object
-    human1 = HumanPlayer(CAR_R, 4, 2)
+    robo1 = RoboCar(CAR_R, 4, 2)
 
-    startGame(human1, images, TRACK_OL_MASK, REWARDS, REWARDS_mask, FLAGS)
+
+    # Q-Learning
+    start_q_table = None # or the path of the prev wts/pickle
+    q_table = ""
+
+    # Loading existing qTable/ initializing
+    if start_q_table is None:
+        q_table = defaultdict(initQtableRow)  # whenever a new combination of state will be called it will be randomly initialized
+        # states (radar readings) * #actions
+    else:
+        with open(start_q_table, "rb") as f:
+            q_table = pickle.load(f)
+            q_table = defaultdict(initQtableRow, q_table)
+
+
+    startGame(robo1, TRACK_OL_MASK, FLAGS, q_table)

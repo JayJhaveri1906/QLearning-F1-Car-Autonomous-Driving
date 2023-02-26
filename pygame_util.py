@@ -56,7 +56,7 @@ def drawTable(win, dist):
         c+=1
 
 
-def drawRadarV2(win, car, trackMask, RADAR):
+def drawRadarV2(win, car, trackMask, FLAGS):
     # Angle of orientation from the y axis
     angle_radians = math.radians(car.angle)
 
@@ -121,7 +121,7 @@ def drawRadarV2(win, car, trackMask, RADAR):
             # Check if the pixel is not transparent
             if mask_value != 0:
                 # Intersection found, draw a red point
-                if RADAR:
+                if FLAGS["RADAR"]:
                     pygame.draw.line(win, (0, 0, 0), (x, y), pixel_pos, 1)
                     pygame.draw.circle(win, (255, 0, 0), pixel_pos, 3)
 

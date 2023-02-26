@@ -36,3 +36,5 @@ class HumanPlayer(AbstractCar): # inherits everything from super class.
                 self.fwdFriction()
             if lastMove == 1:
                 self.bkwdFriction()
+
+        return lastMove
