@@ -67,8 +67,8 @@ def drawRadarV2(win, car, trackMask, FLAGS):
 
     dick = {
         "FRONT RAY": 0,
-        "FRONT RAY Quad": math.pi / 16,
-        "FRONT RAY -Quad": -math.pi / 16,
+        # "FRONT RAY Quad": math.pi / 16,
+        # "FRONT RAY -Quad": -math.pi / 16,
         "FRONT RAY Oct": math.pi / 8,
         "FRONT RAY -Oct": -math.pi / 8,
         "FRONT RAY 5OCT": 3 * math.pi / 8,
@@ -84,8 +84,8 @@ def drawRadarV2(win, car, trackMask, FLAGS):
 
     dist = {
         0: -1,
-        math.pi / 16: MAX_DISTANCE,
-        -math.pi / 16: MAX_DISTANCE,
+        # math.pi / 16: MAX_DISTANCE,
+        # -math.pi / 16: MAX_DISTANCE,
         math.pi / 8: MAX_DISTANCE,
         -math.pi / 8: MAX_DISTANCE,
         3 * math.pi / 8: MAX_DISTANCE,

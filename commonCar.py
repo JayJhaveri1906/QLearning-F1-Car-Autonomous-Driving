@@ -26,8 +26,8 @@ class AbstractCar:  # Abstract parent class of a car
     def move_bkwd(self):
         if self.vel > 0:
             self.vel = max(self.vel - 3 * self.acc, 0)  # acceerate the car
-        else:
-            self.vel = max(self.vel - self.acc, -self.max_vel / (1.5))  # acceerate the car
+        # else:  # Removed Reversing for now
+        #     self.vel = max(self.vel - self.acc, -self.max_vel / (1.5))  # acceerate the car
 
         self.move()
 

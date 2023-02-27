@@ -13,6 +13,28 @@ class RoboCar(AbstractCar): # inherits everything from super class.
         super().__init__(max_vel, rot_vel)
 
 
+    def getHumanAction(self):  # To get faster learning....
+        keys = pygame.key.get_pressed()
+        action = 6 # default do nothing
+
+        if keys[pygame.K_a]:
+            action = 2
+        if keys[pygame.K_d]:
+            action = 3
+        if keys[pygame.K_w]:
+            action = 0
+        if keys[pygame.K_s]:
+            action = 1
+        if keys[pygame.K_w] and keys[pygame.K_a]:
+            action = 4
+        if keys[pygame.K_w] and keys[pygame.K_d]:
+            action = 5
+        if keys[pygame.K_h]:  # save the model using human input
+            action = -1
+
+        return action
+
+
     def performAction(self, lastMove, action):
 
         JFR = {

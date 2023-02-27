@@ -51,6 +51,7 @@ def startGame(car, TRACK_OL_MASK, REWARDS, REWARDS_mask, FLAGS=None, q_table = N
             "RADAR": True,
             "REWARD": True,
             "RENDER": True,
+            "HUMAN_TRAIN": True
         }
 
     lastMove = 0  # 0: fwd, 1: bkwd  ## Used to remember which the last movement was, accordingly apply friction.
@@ -59,20 +60,36 @@ def startGame(car, TRACK_OL_MASK, REWARDS, REWARDS_mask, FLAGS=None, q_table = N
 
     # Q-learning variable
     epoch = 0  # updates after every death
-    MOVE_PENALTY = 1
-    DEATH_PENALTY = 300
-    GATE_REWARD = 25
+    MOVE_PENALTY = 10
+    DEATH_PENALTY = 3000
+    GATE_REWARD = 500
+    FINAL_REWARD = 1000
+    TIME_COUNTER = 0
+    MAX_TIME_PER_GATE = 500
 
-    epsilon = 0
-    EPS_DECAY = 1
+    # Made epsilon reward Gate based
+    if FLAGS["HUMAN_TRAIN"]:
+        epsilon = [1] * len(REWARDS_mask)
+        EPS_DECAY = 1
+    else:
+        # epsilon = [0.9] * len(REWARDS_mask)
+        epsilon = [0.5405265605235477, 0.763397069174242, 0.8491101701925684, 0.8865994155652902, 0.8942578203397251,
+                   0.8964068317989728, 0.8985610075969009, 0.8994601079928001, 0.9, 0.9, 0.9, 0.9, 0.9, 0.9, 0.9, 0.9,
+                   0.9, 0.9, 0.9, 0.9, 0.9, 0.9, 0.9, 0.9, 0.9, 0.9, 0.9, 0.9, 0.9, 0.9, 0.9, 0.9, 0.9, 0.9, 0.9, 0.9,
+                   0.9, 0.9, 0.9, 0.9, 0.9, 0.9]
+        EPS_DECAY = 1 - (2 * 10**-4)
+
+    if FLAGS["TEST"]:
+        epsilon = [0] * len(REWARDS_mask)
+        EPS_DECAY = 0
 
     SHOW_EVERY = 100
 
     LEARNING_RATE = 0.1
     DISCOUNT = 0.95
 
-    BUCKETS = 3
-    ####
+    BUCKETS = 1
+    ###################
 
 
     FPS = 60
@@ -82,6 +99,10 @@ def startGame(car, TRACK_OL_MASK, REWARDS, REWARDS_mask, FLAGS=None, q_table = N
 
     # Original Readings
     lidarReadings = draw(WIN, images, REWARDS[gateNo], car, clock, FLAGS)  # Drawing ## Also handles lidar
+
+    # Bucketing our radar readings into a bucket of 3 to save space basically in short cause the qtabe
+    # naturally would become 600 * 600 * 600...#obs times * #actions
+    # this makes it 200 * 200 ...# obs times * #act
     obs = bucketReading(lidarReadings, BUCKETS)
 
     epoch_rewards = []
@@ -90,6 +111,17 @@ def startGame(car, TRACK_OL_MASK, REWARDS, REWARDS_mask, FLAGS=None, q_table = N
     run = True
     while run:  # handles all events (collisions, user movements, window status, etc)
         clock.tick(FPS)  # V-Sync
+        TIME_COUNTER += 1
+
+        if TIME_COUNTER == MAX_TIME_PER_GATE:
+            TIME_COUNTER = 0
+            car.reset()
+            lidarReadings = draw(WIN, images, REWARDS[gateNo], car, clock, FLAGS)
+            obs = bucketReading(lidarReadings, BUCKETS)
+            gateNo = 0
+            epsilon[gateNo] *= EPS_DECAY
+            print(f"time ran out ded {epoch}")
+            epoch += 1
 
         for event in pygame.event.get():  # Any event happened will be handelled here
             if event.type == pygame.QUIT:  # X is clicked?
@@ -100,20 +132,35 @@ def startGame(car, TRACK_OL_MASK, REWARDS, REWARDS_mask, FLAGS=None, q_table = N
             lastMove = car.movePlayer(lastMove)
 
         else:
-            # Bucketing our radar readings into a bucket of 3 to save space basically in short cause the qtabe
-            # naturally would become 600 * 600 * 600...#obs times * #actions
-            # this makes it 200 * 200 ...# obs times * #act
-            if np.random.random() > epsilon:    # Don't explore
+            # save model
+            keys_ = pygame.key.get_pressed()
+            if keys_[pygame.K_p]:  # save the model using human input
+                with open(f"qTables/qtableSavedModelP-{int(time.time())}_{epoch},{BUCKETS}.pickle", "wb") as f:
+                    pickle.dump(q_table, f)
+                print("saved model")
+
+
+            if np.random.random() > epsilon[gateNo]:    # Don't explore
                 action = np.argmax(q_table[obs])
             else:                               # explore
-                action = np.random.randint(0, NoOfActions)
+                if FLAGS["HUMAN_TRAIN"]:
+                    action = car.getHumanAction()  # humanized learning???
+                    if action == -1:
+                        with open(f"qTables/qtableHumanSave-{int(time.time())}_{epoch},{BUCKETS}.pickle", "wb") as f:
+                            pickle.dump(q_table, f)
+
+                        action = 6
+                else:
+                    action = np.random.randint(0, NoOfActions)
+
 
             lastMove = car.performAction(lastMove, action)  # perform the action
 
         # Track Boundary Detection
-        if car.collision(TRACK_OL_MASK, 0, 0):  # 0,0 because mask/ track is the bigg img
+        if car.collision(TRACK_OL_MASK, 0, 0): # 0,0 because mask/ track is the bigg img
             car.reset()
             reward = -DEATH_PENALTY
+            epsilon[gateNo] *= EPS_DECAY
             gateNo = 0 # handles reward gate
 
         # Checking Reward Gate Collision
@@ -126,9 +173,10 @@ def startGame(car, TRACK_OL_MASK, REWARDS, REWARDS_mask, FLAGS=None, q_table = N
             # Handle if last reward gate (FINISH)
             if gateNo == len(REWARDS_mask)-1:
                 print("Reach Finished at ", epoch)
-                with open(f"qTables/qtableFinish-{int(time.time())}_{epoch}.pickle", "wb") as f:
+                with open(f"qTables/qtableFinish-{int(time.time())}_{epoch},{BUCKETS}.pickle", "wb") as f:
                     pickle.dump(q_table, f)
                 epoch += 1
+                reward = FINAL_REWARD
 
         else:
             reward = -MOVE_PENALTY
@@ -140,11 +188,14 @@ def startGame(car, TRACK_OL_MASK, REWARDS, REWARDS_mask, FLAGS=None, q_table = N
         current_q = q_table[obs][action]
 
         if reward == GATE_REWARD:
-            print("gate", epoch)
+            print("gate", epoch, "time taken:", TIME_COUNTER)
+            TIME_COUNTER = 0
             new_q = GATE_REWARD
         elif reward == -DEATH_PENALTY:
             new_q = -DEATH_PENALTY
             print("ded", epoch)
+        elif reward == FINAL_REWARD:
+            new_q = FINAL_REWARD
         else:
             new_q = (1 - LEARNING_RATE) * current_q + LEARNING_RATE * (reward + DISCOUNT * maxFutureQ)
 
@@ -154,8 +205,9 @@ def startGame(car, TRACK_OL_MASK, REWARDS, REWARDS_mask, FLAGS=None, q_table = N
         if reward == GATE_REWARD or reward == -DEATH_PENALTY:
 
             if (epoch) % SHOW_EVERY == 0:
-                print(f"At {epoch}, exploration {epsilon}")
-                with open(f"qTables/qtable-{int(time.time())}_{epoch}.pickle", "wb") as f:
+                print(f"At {epoch},{BUCKETS}, exploration {epsilon[gateNo]}, Gate: {gateNo}")
+                print(epsilon)
+                with open(f"qTables/qtable-{int(time.time())}_{epoch},{BUCKETS}.pickle", "wb") as f:
                     pickle.dump(q_table, f)
 
             if reward == -DEATH_PENALTY:
@@ -163,9 +215,10 @@ def startGame(car, TRACK_OL_MASK, REWARDS, REWARDS_mask, FLAGS=None, q_table = N
                 epoch_rewards.append(episodeReward)
                 episodeReward = 0
                 # Decay exploration:
-                epsilon *= EPS_DECAY
+                # print(epsilon)
 
         obs = newObs
+
 
 
 
@@ -183,9 +236,11 @@ def initQtableRow():
 if __name__ == "__main__":
     # FLAGS
     FLAGS = {
-        "RADAR": True,
-        "REWARD": True,
-        "RENDER": True,
+        "RADAR": False,
+        "REWARD": False,
+        "RENDER": False,
+        "HUMAN_TRAIN": False,
+        "TEST": False,
     }
 
     # MAIN()
@@ -233,11 +288,13 @@ if __name__ == "__main__":
 
 
     # Creating a Robo Object
-    robo1 = RoboCar(CAR_R, 4, 2)
+    robo1 = RoboCar(CAR_R, 2, 2)
 
     # Q-Learning
-    start_q_table = "qTables/qtableFinish-1677436412_24.pickle"  # or the path of the prev wts/pickle
+    # 1600 + 2200
+    start_q_table = "qTables/qtableHumanSave-1677469347_19,1.pickle"  # or the path of the prev wts/pickle
     # start_q_table = None
+
     q_table = ""
 
     # Loading existing qTable/ initializing
