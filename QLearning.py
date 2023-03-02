@@ -61,11 +61,11 @@ def startGame(car, TRACK_OL_MASK, REWARDS, REWARDS_mask, FLAGS=None, q_table = N
     # Q-learning variable
     epoch = 0  # updates after every death
     MOVE_PENALTY = 10
-    DEATH_PENALTY = 3000
+    DEATH_PENALTY = 3001
     GATE_REWARD = 500
     FINAL_REWARD = 1000
     TIME_COUNTER = 0
-    MAX_TIME_PER_GATE = 500
+    MAX_TIME_PER_GATE = 400
 
     # Made epsilon reward Gate based
     if FLAGS["HUMAN_TRAIN"]:
@@ -188,15 +188,15 @@ def startGame(car, TRACK_OL_MASK, REWARDS, REWARDS_mask, FLAGS=None, q_table = N
         maxFutureQ = np.max(q_table[newObs])
         current_q = q_table[obs][action]
 
-        if reward == GATE_REWARD:
-            print("gate", epoch, "time taken:", TIME_COUNTER)
+        if reward % GATE_REWARD == 0:
+            print("gate", epoch, ",", gateNo, "time taken:", TIME_COUNTER)
             TIME_COUNTER = 0
-            new_q = GATE_REWARD
+            new_q = reward
         elif reward == -DEATH_PENALTY:
-            new_q = -DEATH_PENALTY
+            new_q = reward
             print("ded", epoch)
         elif reward == FINAL_REWARD:
-            new_q = FINAL_REWARD
+            new_q = reward
         else:
             new_q = (1 - LEARNING_RATE) * current_q + LEARNING_RATE * (reward + DISCOUNT * maxFutureQ)
 
