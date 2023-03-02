@@ -166,6 +166,7 @@ def startGame(car, TRACK_OL_MASK, REWARDS, REWARDS_mask, FLAGS=None, q_table = N
         # Checking Reward Gate Collision
         elif car.collision(REWARDS_mask[gateNo], 0, 0):
             # print("Reward!")
+            reward = GATE_REWARD * (gateNo+1)
             gateNo += 1
             gateNo %= len(REWARDS_mask) # modulus restarts gate automatically
 
