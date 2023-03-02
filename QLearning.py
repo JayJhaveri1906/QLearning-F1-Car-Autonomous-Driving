@@ -73,20 +73,20 @@ def startGame(car, TRACK_OL_MASK, REWARDS, REWARDS_mask, FLAGS=None, q_table = N
         EPS_DECAY = 1
     else:
         # epsilon = [0.9] * len(REWARDS_mask)
-        epsilon = [0.5405265605235477, 0.763397069174242, 0.8491101701925684, 0.8865994155652902, 0.8942578203397251,
-                   0.8964068317989728, 0.8985610075969009, 0.8994601079928001, 0.9, 0.9, 0.9, 0.9, 0.9, 0.9, 0.9, 0.9,
+        epsilon = [0.00607039955568851, 0.041208891621480594, 0.05790120948680733, 0.232565335586142,
+                   0.35220829642741547, 0.5177322779220248, 0.6887501638125324, 0.7551674354364434, 0.9, 0.9, 0.9, 0.9,
                    0.9, 0.9, 0.9, 0.9, 0.9, 0.9, 0.9, 0.9, 0.9, 0.9, 0.9, 0.9, 0.9, 0.9, 0.9, 0.9, 0.9, 0.9, 0.9, 0.9,
-                   0.9, 0.9, 0.9, 0.9, 0.9, 0.9]
-        EPS_DECAY = 1 - (2 * 10**-4)
+                   0.9, 0.9, 0.9, 0.9, 0.9, 0.9, 0.9, 0.9, 0.9, 0.9]
+        EPS_DECAY = 1 - (3 * 10**-4)
 
     if FLAGS["TEST"]:
         epsilon = [0] * len(REWARDS_mask)
         EPS_DECAY = 0
 
-    SHOW_EVERY = 100
+    SHOW_EVERY = 200
 
     LEARNING_RATE = 0.1
-    DISCOUNT = 0.95
+    DISCOUNT = 0.65
 
     BUCKETS = 1
     ###################
@@ -168,7 +168,7 @@ def startGame(car, TRACK_OL_MASK, REWARDS, REWARDS_mask, FLAGS=None, q_table = N
             # print("Reward!")
             gateNo += 1
             gateNo %= len(REWARDS_mask) # modulus restarts gate automatically
-            reward = GATE_REWARD
+
 
             # Handle if last reward gate (FINISH)
             if gateNo == len(REWARDS_mask)-1:
@@ -202,9 +202,9 @@ def startGame(car, TRACK_OL_MASK, REWARDS, REWARDS_mask, FLAGS=None, q_table = N
         q_table[obs][action] = new_q
 
         episodeReward += reward
-        if reward == GATE_REWARD or reward == -DEATH_PENALTY:
+        if reward % GATE_REWARD == 0 or reward == -DEATH_PENALTY:
 
-            if (epoch) % SHOW_EVERY == 0:
+            if (epoch) % SHOW_EVERY == 0 and reward == -DEATH_PENALTY:
                 print(f"At {epoch},{BUCKETS}, exploration {epsilon[gateNo]}, Gate: {gateNo}")
                 print(epsilon)
                 with open(f"qTables/qtable-{int(time.time())}_{epoch},{BUCKETS}.pickle", "wb") as f:
@@ -291,8 +291,9 @@ if __name__ == "__main__":
     robo1 = RoboCar(CAR_R, 2, 2)
 
     # Q-Learning
-    # 1600 + 2200
-    start_q_table = "qTables/qtableHumanSave-1677469347_19,1.pickle"  # or the path of the prev wts/pickle
+    # 1600 + 2200 + 4400 + 11200 + 8400 + 8200(higher exploration) + 10200 + 12400 + 52_human_wted rewards +
+    # +
+    start_q_table = "qTables/qtableHumanSave-1677722381_52,1.pickle"  # or the path of the prev wts/pickle
     # start_q_table = None
 
     q_table = ""

@@ -11,3 +11,5 @@ venv/
 
 # Ignore local development configuration files
 *.env
+
+qTables/records
